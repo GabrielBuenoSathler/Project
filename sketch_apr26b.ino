@@ -1,7 +1,7 @@
 #include <ESP8266WiFi.h>
 
-#define SSID "VIVO FIBRA-302"
-#define PASSWD "theodoro0206"
+#define SSID "NOME DA REDE"
+#define PASSWD "SENHA DA REDE"
 #define SOCK_PORT 8080
 #define ENA   14          // Enable/speed motors Right        GPIO14(D5)
 #define ENB   12          // Enable/speed motors Left         GPIO12(D6)
