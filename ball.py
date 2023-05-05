@@ -33,7 +33,14 @@ args = vars(ap.parse_args())
 greenLower = (0, 208, 186)
 greenUpper = (47, 255, 255)
 pts = deque(maxlen=args["buffer"])
-
+def quadrade(n1,n2):
+	if n2 > 200 and n1 > 300:
+		print("abaixo e esquerda" )
+	
+def quadrade_2(x1,y1):
+	if x1 > 300 and  y1 < 200:
+		print("cima")	
+   
 
 if not args.get("video", False):
 	vs = VideoStream(src=0).start()
@@ -46,9 +53,7 @@ time.sleep(2.0)
 while True:
 	 
 	frame = vs.read()
-	cv2.line(img=frame, pt1=(0,200), pt2=(640, 200), color=(255, 0, 0), thickness=5, lineType=8, shift=0)
-	cv2.line(img=frame, pt1=(320, 0), pt2=(320, 640), color=(255, 0, 0), thickness=5, lineType=8, shift=0)
-    
+	
 
 
 	frame = frame[1] if args.get("video", False) else frame
@@ -69,7 +74,9 @@ while True:
 	mask = cv2.erode(mask, None, iterations=2)
 	mask = cv2.dilate(mask, None, iterations=2)
 
-	
+	cv2.line(img=frame, pt1=(0,200), pt2=(640, 200), color=(255, 0, 0), thickness=5, lineType=8, shift=0)
+	cv2.line(img=frame, pt1=(320, 0), pt2=(320, 640), color=(255, 0, 0), thickness=5, lineType=8, shift=0)
+    
 	cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)
 	cnts = imutils.grab_contours(cnts)
@@ -89,9 +96,10 @@ while True:
 		if radius > 10:
 			x = int(x)
 			y = int(y)
-			cx = y
-			cy = x
-            
+			cx = x
+			cy = y
+			quadrade(cx,cy)
+			quadrade_2(cx,cy)
 			cv2.circle(frame,(x,y),20,(0,255,0),2)
 
 			if(y-25>0):
