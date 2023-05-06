@@ -30,17 +30,27 @@ ap.add_argument("-b", "--buffer", type=int, default=64,
 	help="max buffer size")
 args = vars(ap.parse_args())
 
-greenLower = (0, 208, 186)
-greenUpper = (47, 255, 255)
+greenLower = (0,0,168)
+greenUpper = (172,111,255)
 pts = deque(maxlen=args["buffer"])
-def quadrade(n1,n2):
-	if n2 > 200 and n1 > 300:
-		print("abaixo e esquerda" )
-	
-def quadrade_2(x1,y1):
-	if x1 > 300 and  y1 < 200:
-		print("cima")	
-   
+def quadrade_1(x1,y1):
+	if x1 < 300 and y < 200:
+		print("quadrante 1")
+
+def quadrade_2(x2,y2):
+	if x2 > 300 and y < 200:
+		print("quadrante 2")
+
+
+def quadrade_3(x3,y3):
+	if x3 < 300 and y > 200:
+		print("quadrante 3")
+
+def quadrade_4(x4,y4):
+	if x4 > 300 and y > 200:
+		print("quadrante 4")
+		
+
 
 if not args.get("video", False):
 	vs = VideoStream(src=0).start()
@@ -98,8 +108,10 @@ while True:
 			y = int(y)
 			cx = x
 			cy = y
-			quadrade(cx,cy)
+			quadrade_1(cx,cy)
 			quadrade_2(cx,cy)
+			quadrade_3(cx,cy)
+			quadrade_4(cx,cy)
 			cv2.circle(frame,(x,y),20,(0,255,0),2)
 
 			if(y-25>0):
