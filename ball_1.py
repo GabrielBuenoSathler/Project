@@ -82,22 +82,25 @@ def quadrade_1(x1,y1):
 	if x1 < 300 and y < 200:
 		print("quadrante 1")
 		send_command("F")
-	else:
-		send_command("S")	
+    
 
 def quadrade_2(x2,y2):
 	if x2 > 300 and y < 200:
 		print("quadrante 2")
-		send_command("F")
+		send_command("L")
+        send_command("F")
+		send_command("9")
     
 
 def quadrade_3(x3,y3):
 	if x3 < 300 and y > 200:
 		print("quadrante 3")
+		send_command("B")
 
 def quadrade_4(x4,y4):
 	if x4 > 300 and y > 200:
 		print("quadrante 4")
+		print
 		
 
 
