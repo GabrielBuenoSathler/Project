@@ -1,0 +1,193 @@
+from collections import deque
+from imutils.video import VideoStream
+import numpy as np
+import argparse
+import cv2
+import imutils
+import time
+import requests
+
+H_MIN = 0
+H_MAX = 255
+S_MIN = 0
+S_MAX = 255
+V_MIN = 0
+V_MAX = 255
+
+# Default capture width and height
+FRAME_WIDTH = 640
+FRAME_HEIGHT = 480
+# Max number of objects to be detected in frame
+MAX_NUM_OBJECTS = 50
+# Minimum and maximum object area
+MIN_OBJECT_AREA = 20 * 20
+MAX_OBJECT_AREA = FRAME_HEIGHT * FRAME_WIDTH / 1.5
+font = cv2.FONT_HERSHEY_SIMPLEX
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-v", "--video",
+                help="path to the (optional) video file")
+ap.add_argument("-b", "--buffer", type=int, default=64,
+                help="max buffer size")
+args = vars(ap.parse_args())
+url = "http://192.168.4.1"
+
+# COMANDOS DO ROBO
+commands = {
+    "F": "State=F",
+    "B": "State=B",
+    "L": "State=L",
+    "R": "State=R",
+    "I": "State=I",
+    "G": "State=G",
+    "J": "State=J",
+    "H": "State=H",
+    "W": "State=W",
+    "w": "State=w",
+    "0": "State=0",
+    "1": "State=1",
+    "2": "State=2",
+    "3": "State=3",
+    "4": "State=4",
+    "5": "State=5",
+    "6": "State=6",
+    "7": "State=7",
+    "8": "State=8",
+    "9": "State=9",
+    "S": "State=S"
+}
+
+# PARA MANDAR COMANDOS
+def send_command(command):
+    try:
+        r = requests.get(url, params=commands[command])
+        if r.status_code == 200:
+            print("Command sent successfully")
+        else:
+            print("Failed to send command")
+    except:
+        print("Failed to connect to server")
+
+# FUNÇÃO PARA RASTREAR OBJETOS VERDES
+
+   
+def divide_quadrants(frame):
+    height, width, _ = frame.shape
+    quadrant_width = width // 2
+    quadrant_height = height // 2
+
+    cv2.line(frame, (quadrant_width, 0), (quadrant_width, height), (255, 255, 255), 2)
+    cv2.line(frame, (0, quadrant_height), (width, quadrant_height), (255, 255, 255), 2)
+    return frame
+
+def get_object_quadrant(x, y, width, height):
+    quadrant_width = FRAME_WIDTH // 2
+    quadrant_height = FRAME_HEIGHT // 2
+
+    if x < quadrant_width and y < quadrant_height:
+        return 1
+    elif x >= quadrant_width and y < quadrant_height:
+        return 2
+    elif x < quadrant_width and y >= quadrant_height:
+        return 3
+    else:
+        return 4
+
+
+# FUNÇÃO PARA RASTREAR OBJETOS AZUIS
+def track_object(frame, lower_color, upper_color):
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, lower_color, upper_color)
+    mask = cv2.erode(mask, None, iterations=2)
+    mask = cv2.dilate(mask, None, iterations=2)
+
+    cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+    center = None
+
+    if len(cnts) > 0:
+        c = max(cnts, key=cv2.contourArea)
+        ((x, y), radius) = cv2.minEnclosingCircle(c)
+        M = cv2.moments(c)
+        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+
+        if radius > 10:
+            cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 0), 2)
+            cv2.circle(frame, center, 5, (0, 0, 255), -1)
+
+    return frame, center
+
+def calculate_line(frame, point1, point2):
+    if point1 is None or point2 is None:
+        return frame
+    
+    cv2.line(frame, point1, point2, (255, 0, 0), 2)
+    return frame
+    
+
+
+
+
+if not args.get("video", False):
+    vs = VideoStream(src=1).start()
+else:
+    vs = cv2.VideoCapture(args["video"])
+
+time.sleep(2.0)
+
+while True:
+    frame = vs.read()
+    frame = frame[1] if args.get("video", False) else frame
+
+    if frame is None:
+        break
+
+    frame = imutils.resize(frame, width=600)
+    greenLower = (160, 100, 100)
+    greenUpper = (179, 255, 255)
+    frame, green_center = track_object(frame, greenLower, greenUpper)
+
+    # Rastreamento de objetos azuis
+    blueLower = (110, 50, 50)
+    blueUpper = (130, 255, 255)
+    frame, blue_center = track_object(frame, blueLower, blueUpper)
+
+    # Determinar em quais quadrantes os objetos estão
+    if green_center is not None:
+        x, y = green_center
+        if x < 300 and y < 200:
+            print("Objeto verde no quadrante 1")
+        elif x > 300 and y < 200:
+            print("Objeto verde no quadrante 2")
+        elif x < 300 and y > 200:
+            print("Objeto verde no quadrante 3")
+        elif x > 300 and y > 200:
+            print("Objeto verde no quadrante 4")
+
+    if blue_center is not None:
+        x, y = blue_center
+        if x < 300 and y < 200:
+            print("Objeto azul no quadrante 1")
+        elif x > 300 and y < 200:
+            print("Objeto azul no quadrante 2")
+        elif x < 300 and y > 200:
+            print("Objeto azul no quadrante 3")
+        elif x > 300 and y > 200:
+            print("Objeto azul no quadrante 4")
+    
+   
+    
+    frame = calculate_line(frame, green_center, blue_center)   
+
+    cv2.imshow("Frame", frame)
+    key = cv2.waitKey(1) & 0xFF
+
+    if key == ord("q"):
+        break
+
+if not args.get("video", False):
+    vs.stop()
+else:
+    vs.release()
+
+cv2.destroyAllWindows()
